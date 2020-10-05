@@ -1,7 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
-
+const Article = require("./models/Article");
+const methodOverride = require("method-override");
 const articlesRoute = require("./routes/articles");
 
 mongoose.connect(
@@ -9,6 +10,7 @@ mongoose.connect(
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useCreateIndex: true,
   },
   (err) => {
     if (!err) {
@@ -24,25 +26,17 @@ mongoose.connect(
 app.set("view engine", "ejs");
 
 //Parse Url Encoded Bodies and JSON
-app.use(express.urlencoded({ extended: false }), express.json());
-
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(methodOverride("_method"));
 //Serving static files in Express
 app.use(express.static("public"));
 
 //Main Index Route
-app.get("/", (req, res) => {
-  const articles = [
-    {
-      title: "Test Article",
-      createdAt: new Date(),
-      description: "Test Description",
-    },
-    {
-      title: "Test Article2",
-      createdAt: new Date(),
-      description: "Test Description2",
-    },
-  ];
+app.get("/", async (req, res) => {
+  const articles = await Article.find().sort({
+    createdAt: "desc",
+  });
   res.render("articles/index", {
     articles: articles,
   });
